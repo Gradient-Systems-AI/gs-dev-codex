@@ -6,8 +6,8 @@ argument-hint: "PR number or URL (optional — auto-detects current branch PR)"
 
 > **Codex adaptation note.** This skill was ported from a Claude Code plugin. Translate its Claude-isms as you execute:
 > - **"the Agent tool" / "dispatch a subagent" / "in one message with multiple Agent calls"** -> delegate to Codex **subagents**. To fan out in parallel, ask for the work to be delegated to N subagents at once; Codex collects their results back into this thread. The named specialists (`correctness-reviewer`, `clarity-reviewer`, etc.) are installed as custom agents under `~/.codex/agents/` (synced by this plugin) -- spawn them by name.
-> - **Model tiers** -- the skill names Claude models when selecting a subagent model. Codex tiers these by **reasoning effort**, not model id: `opus`/`inherit` -> **high**, `sonnet` -> **medium**, `haiku` -> **low**. These are already encoded per-agent in the installed `~/.codex/agents/*.toml` (which the plugin syncs), so you do not set the model yourself -- it inherits the session model, and effort comes from the agent file.
-> - **Generic implementer / verify subagents** (in the build phase) are provided as the `implementer` and `verify` custom agents. Route S/M complexity -> `implementer` (medium), L -> `implementer` at high reasoning, and workspace verification -> `verify`.
+> - **Model tiers** -- when the skill names a Claude model for a subagent, it maps to a real Codex model chosen **per tier at install** from the models this machine actually has: `opus`/`inherit` -> **L** (frontier, e.g. `gpt-5.6-sol`, high reasoning); `sonnet` -> **M** (balanced, e.g. `gpt-5.6-terra`, medium); `haiku` -> **S** (fast, e.g. `gpt-5.6-luna`, low). Each named specialist already carries its resolved model + effort in `~/.codex/agents/*.toml` (synced by this plugin, with automatic fallback to gpt-5.5/5.4 when the 5.6 family is absent), so you spawn it by name and never set the model yourself.
+> - **Build subagents** route by ticket complexity to distinct agents/models: **S** -> `implementer-s` (fast), **M** -> `implementer-m` (balanced), **L** -> `implementer-l` (frontier, high reasoning); workspace verification -> `verify` (fast).
 > - This variant uses the **`gh` CLI** for Issues/PRs -- make sure `gh auth status` is green before running the tickets/build/review phases.
 > - Parallel fan-out is capped by `agents.max_threads` in `~/.codex/config.toml` -- set it to 8+ so the full review panel runs at once (see the plugin's `config.example.toml`). Bundled files referenced below (`formats/`, `prompts/`) are relative to this skill's own directory.
 
@@ -122,15 +122,15 @@ Identify the project platform (e.g., Next.js, VS Code extension, CLI tool) from 
 ### 3. Build the specialist roster
 
 Always include:
-- `correctness-reviewer` (inherit)
-- `clarity-reviewer` (inherit)
+- `correctness-reviewer` (tier L — frontier)
+- `clarity-reviewer` (tier L — frontier)
 
 Conditionally include based on file classification above:
-- `error-hunter` (sonnet)
-- `type-integrity-reviewer` (inherit)
-- `test-integrity-reviewer` (sonnet)
-- `fragility-reviewer` (sonnet)
-- `exposure-reviewer` (sonnet) — if security-sensitive file patterns detected
+- `error-hunter` (tier M — balanced)
+- `type-integrity-reviewer` (tier L — frontier)
+- `test-integrity-reviewer` (tier M — balanced)
+- `fragility-reviewer` (tier M — balanced)
+- `exposure-reviewer` (tier M — balanced) — if security-sensitive file patterns detected
 
 ---
 
@@ -168,7 +168,7 @@ Load `skills/sprint-review/prompts/review-prompt.md` for the dispatch template. 
 
 **Dispatch enrichment:** When dispatching the `exposure-reviewer`, read `skills/sprint-review/prompts/exposure-detection-prompt.md` and include its content in the Agent prompt alongside the standard review-prompt.md template. This gives the agent the detection heuristics and PII taxonomy it needs.
 
-**clarity-reviewer:** Dispatch it in this same parallel batch like any other specialist — omit the model field so it inherits (Opus). It reviews the full diff. It previously ran last to dedupe against other agents' findings; that de-duplication now happens at scoring (Phase 4), so it no longer waits on the others.
+**clarity-reviewer:** Dispatch it in this same parallel batch like any other specialist — it is tier L (frontier model, high reasoning), carried in its agent file. It reviews the full diff. It previously ran last to dedupe against other agents' findings; that de-duplication now happens at scoring (Phase 4), so it no longer waits on the others.
 
 For each agent, provide in the Agent prompt:
 - PR context (number, title, description)
@@ -181,15 +181,17 @@ Agent tool calls (all in one message for parallel execution):
 
   Agent 1:
     description: "Review #[number] code quality"
+    agent: correctness-reviewer
     prompt: [review prompt with correctness-reviewer focus + relevant diff]
 
   Agent 2:
     description: "Review #[number] silent failures"
-    model: medium reasoning
+    agent: error-hunter
     prompt: [review prompt with error-hunter focus + relevant diff]
 
   Agent 3:
     description: "Review #[number] type design"
+    agent: type-integrity-reviewer
     prompt: [review prompt with type-integrity-reviewer focus + relevant diff]
 
   ... (one per specialist in the roster)
@@ -218,7 +220,7 @@ You MUST NOT score findings yourself. Dispatch a single scoring agent via the Ag
 
 ### 1. Score each finding
 
-You MUST call the Agent tool with `model: medium reasoning` to score all findings. Load the rubric from `skills/sprint-review/prompts/scoring-prompt.md` and include it in the Agent prompt. Also provide:
+You MUST dispatch the **`scorer`** agent to score all findings. Load the rubric from `skills/sprint-review/prompts/scoring-prompt.md` and include it in the Agent prompt. Also provide:
 - All findings from Phase 3 (description, file, line, evidence, agent, suggestion)
 - The PR diff for verification
 - Instruction to **deduplicate**: when multiple agents flag the same file:line, merge into one finding — keep the highest score and clearest framing, and note which agents converged (convergence signals importance)
@@ -226,7 +228,7 @@ You MUST call the Agent tool with `model: medium reasoning` to score all finding
 ```
 Agent tool call:
   description: "Score #[number] review findings"
-  model: medium reasoning
+  agent: scorer
   prompt: [scoring-prompt.md rubric + all findings + diff]
 ```
 
@@ -391,7 +393,7 @@ Each PR already carries its own `### Code Review` comment and `needs-refine` lab
 - **Evidence required** — no finding without file:line and code snippet.
 - **Changed code only** — never flag pre-existing issues.
 - **No CI duplication** — don't flag what linters, typecheckers, or tests catch.
-- **Model selection** — sonnet for scoring and the pattern/extraction specialists; inherit (Opus) for the reasoning-heavy agents (correctness-reviewer, clarity-reviewer, type-integrity-reviewer), all dispatched in the parallel batch so Opus latency is absorbed rather than added sequentially.
+- **Model selection** — each agent carries its own model, resolved per tier at install: tier M (balanced, e.g. gpt-5.6-terra) for scoring and the pattern/extraction specialists; tier L (frontier, e.g. gpt-5.6-sol, high reasoning) for the reasoning-heavy agents (correctness-reviewer, clarity-reviewer, type-integrity-reviewer). All dispatched in one parallel batch so the frontier-model latency is absorbed rather than added sequentially.
 - **De-duplication at scoring** — the simplifier runs in the parallel batch (no longer last); the scoring agent merges findings that multiple agents flag for the same file:line.
 - **Full SHA in links** — abbreviated SHAs break GitHub links.
 - **Draft-to-ready conversion** — draft PRs from /sprint-build are the expected input. Convert them to ready, don't reject them.

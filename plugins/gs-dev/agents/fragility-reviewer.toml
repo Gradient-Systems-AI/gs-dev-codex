@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: fragility-reviewer
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: M   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "fragility-reviewer"
 description = "Uses git blame, history, and previous PR review comments to find fragile code — lines with high churn, repeated fixes, conflicting changes, or recurring review feedback. Runs when modified lines have 3+ changes in recent history."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
@@ -124,4 +125,5 @@ For PR comment findings:
 ```
 
 If no concerning patterns found, report: "No high-churn, fragility patterns, or recurring review themes found in the modified areas."
+
 '''

@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: type-integrity-reviewer
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: L   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "type-integrity-reviewer"
 description = "Analyzes TypeScript type design for encapsulation, invariant expression, and correctness. Runs when types are added or modified."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 
@@ -63,4 +64,5 @@ For each finding:
 ```
 
 If types are well-designed, report: "Type design is sound — invariants are well-expressed and encapsulation is correct."
+
 '''

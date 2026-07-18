@@ -5,7 +5,7 @@ This repo is the **Codex CLI port** of the `gs-dev` sprint-workflow plugin
 development pipeline driven by skills and parallel subagents, and it uses the
 **`gh` CLI** for GitHub Issues and Pull Requests. Run `gh auth login` before use.
 
-It ships as a Codex plugin: skills live in `plugins/gs-dev/skills/`, and the 12
+It ships as a Codex plugin: skills live in `plugins/gs-dev/skills/`, and the 16
 specialist subagents install into `~/.codex/agents/` (see README).
 
 ## The pipeline

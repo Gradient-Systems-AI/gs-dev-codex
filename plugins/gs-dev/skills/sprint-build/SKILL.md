@@ -6,8 +6,8 @@ argument-hint: "Milestone, version label, or issue numbers (e.g. 'v4', '#203 #20
 
 > **Codex adaptation note.** This skill was ported from a Claude Code plugin. Translate its Claude-isms as you execute:
 > - **"the Agent tool" / "dispatch a subagent" / "in one message with multiple Agent calls"** -> delegate to Codex **subagents**. To fan out in parallel, ask for the work to be delegated to N subagents at once; Codex collects their results back into this thread. The named specialists (`correctness-reviewer`, `clarity-reviewer`, etc.) are installed as custom agents under `~/.codex/agents/` (synced by this plugin) -- spawn them by name.
-> - **Model tiers** -- the skill names Claude models when selecting a subagent model. Codex tiers these by **reasoning effort**, not model id: `opus`/`inherit` -> **high**, `sonnet` -> **medium**, `haiku` -> **low**. These are already encoded per-agent in the installed `~/.codex/agents/*.toml` (which the plugin syncs), so you do not set the model yourself -- it inherits the session model, and effort comes from the agent file.
-> - **Generic implementer / verify subagents** (in the build phase) are provided as the `implementer` and `verify` custom agents. Route S/M complexity -> `implementer` (medium), L -> `implementer` at high reasoning, and workspace verification -> `verify`.
+> - **Model tiers** -- when the skill names a Claude model for a subagent, it maps to a real Codex model chosen **per tier at install** from the models this machine actually has: `opus`/`inherit` -> **L** (frontier, e.g. `gpt-5.6-sol`, high reasoning); `sonnet` -> **M** (balanced, e.g. `gpt-5.6-terra`, medium); `haiku` -> **S** (fast, e.g. `gpt-5.6-luna`, low). Each named specialist already carries its resolved model + effort in `~/.codex/agents/*.toml` (synced by this plugin, with automatic fallback to gpt-5.5/5.4 when the 5.6 family is absent), so you spawn it by name and never set the model yourself.
+> - **Build subagents** route by ticket complexity to distinct agents/models: **S** -> `implementer-s` (fast), **M** -> `implementer-m` (balanced), **L** -> `implementer-l` (frontier, high reasoning); workspace verification -> `verify` (fast).
 > - This variant uses the **`gh` CLI** for Issues/PRs -- make sure `gh auth status` is green before running the tickets/build/review phases.
 > - Parallel fan-out is capped by `agents.max_threads` in `~/.codex/config.toml` -- set it to 8+ so the full review panel runs at once (see the plugin's `config.example.toml`). Bundled files referenced below (`formats/`, `prompts/`) are relative to this skill's own directory.
 
@@ -158,27 +158,27 @@ The goal is to front-load everything into the prompt so the subagent has what it
 
 Dispatch all implementers for the wave in a **single message with multiple Agent tool calls** for parallel execution. This is the same pattern used by /sprint-review to dispatch specialist agents.
 
-Select model based on ticket complexity:
-- **S** (small) → `model: medium reasoning`
-- **M** (medium) → `model: medium reasoning`
-- **L** (large) → `model: high reasoning` or omit (inherits Opus)
+Route each ticket to the implementer variant matching its complexity — each is a distinct custom agent carrying its own model + reasoning, resolved at install:
+- **S** (small) → delegate to the **`implementer-s`** agent (fast model — e.g. gpt-5.6-luna)
+- **M** (medium) → delegate to the **`implementer-m`** agent (balanced model — e.g. gpt-5.6-terra)
+- **L** (large) → delegate to the **`implementer-l`** agent (frontier model, high reasoning — e.g. gpt-5.6-sol)
 
 ```
 Agent tool calls (all in one message for parallel execution):
 
   Agent 1:
     description: "Implement #[number] [short title] (Wave [N])"
-    model: medium reasoning
+    agent: implementer-s | implementer-m | implementer-l  (by ticket complexity)
     prompt: [enriched implementer prompt for ticket 1]
 
   Agent 2:
     description: "Implement #[number] [short title] (Wave [N])"
-    model: medium reasoning (or high reasoning for L)
+    agent: implementer-m  (or implementer-l for an L ticket)
     prompt: [enriched implementer prompt for ticket 2]
 
   Agent 3:
     description: "Implement #[number] [short title] (Wave [N])"
-    model: medium reasoning
+    agent: implementer-s | implementer-m | implementer-l  (by ticket complexity)
     prompt: [enriched implementer prompt for ticket 3]
 ```
 
@@ -195,7 +195,7 @@ Wait for ALL implementers in the wave to return before proceeding. Then assess e
 - **NEEDS_CONTEXT** → re-dispatch that specific implementer via the Agent tool with the missing context. This does not block other tickets in the wave — they proceed to spec review.
 - **BLOCKED** → assess the blocker:
   1. Can you provide more context? → re-dispatch via Agent tool with context
-  2. Would a more capable model help? → re-dispatch via Agent tool with `model: high reasoning`
+  2. Would a more capable model help? → re-dispatch to the **`implementer-l`** agent (frontier model)
   3. Should the ticket be broken down? → tell the user
   4. Is it a real blocker? → escalate to the user
 
@@ -222,17 +222,17 @@ Agent tool calls (all in one message for parallel execution):
 
   Verify:
     description: "Verify workspace after Wave [N]"
-    model: low reasoning
+    agent: verify
     prompt: "Run exactly this at the repo root: `<the command from ## Verify>`. On PASS, report PASS. On FAIL, paste the failing package, the exact command, and its raw error output verbatim — do not summarise, and do not fix anything."
 
   Spec review 1:
     description: "Spec review #[number] (Wave [N])"
-    model: medium reasoning
+    agent: spec-reviewer
     prompt: [spec reviewer prompt for ticket 1]
 
   Spec review 2:
     description: "Spec review #[number] (Wave [N])"
-    model: medium reasoning
+    agent: spec-reviewer
     prompt: [spec reviewer prompt for ticket 2]
 ```
 

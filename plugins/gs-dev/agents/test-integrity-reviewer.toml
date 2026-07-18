@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: test-integrity-reviewer
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: M   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "test-integrity-reviewer"
 description = "Reviews test quality — do tests actually verify behavior? Missing edge cases? Runs when test files changed."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
@@ -56,4 +57,5 @@ For each finding, rate importance 1-10:
 ```
 
 If tests are solid, report: "Tests effectively verify the changed behavior. No significant gaps found."
+
 '''

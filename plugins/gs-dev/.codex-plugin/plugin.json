@@ -1,6 +1,6 @@
 {
   "name": "gs-dev",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Advanced dev workflow — /sprint-plan (+ ADRs) /sprint-tickets /sprint-build /sprint-review /sprint-refine (+ spec). Ported from the Claude Code gs-dev plugin.",
   "author": {
     "name": "GradientSystems",

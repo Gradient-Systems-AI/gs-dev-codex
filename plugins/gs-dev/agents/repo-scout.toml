@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: repo-scout
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: M   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "repo-scout"
 description = "Explores a specific aspect of the project's codebase — architecture, patterns, or integration points. Reports findings back to the main model for synthesis."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
@@ -61,4 +62,5 @@ Report everything relevant. Include:
 - **Gaps** — things you expected to find but didn't
 
 No rigid format. Structure your findings in whatever way best communicates what you found. The main model will synthesize across all agents.
+
 '''

@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: clarity-reviewer
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: L   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "clarity-reviewer"
 description = "Finds opportunities to simplify code without changing behavior. Reduces nesting, eliminates redundancy, improves readability. Always runs, in parallel with other reviewers."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 
@@ -65,4 +66,5 @@ For each finding:
 ```
 
 If code is already clean, report: "Code is well-structured. No meaningful simplification opportunities in the changed files."
+
 '''

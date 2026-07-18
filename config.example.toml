@@ -15,14 +15,18 @@ max_threads = 8      # >= widest fan-out (7 reviewers + headroom)
 max_depth   = 1      # keep the skill on the main thread; it fans out one level
 
 # --- Models -----------------------------------------------------------------
-# The agents intentionally do NOT hardcode a model — each inherits your session
-# model, and only sets `model_reasoning_effort` (high / medium / low) to tier the
-# work. So you don't need to name a model here; just run your normal model.
+# You do NOT set agent models here. Each agent is tagged with a tier (L/M/S), and
+# the installer (hooks/resolve-models.py) resolves that tier to the best model your
+# Codex actually has — read from ~/.codex/models_cache.json — with fallbacks:
 #
-# Tier mapping (baked into ~/.codex/agents/*.toml as reasoning effort):
-#   opus / inherit -> high    (correctness, clarity, type-integrity, build-architect)
-#   sonnet         -> medium  (error-hunter, exposure, test-integrity, fragility, repo-scout, spec-keeper, implementer)
-#   haiku          -> low     (verify)
+#   Tier   Role                         Preferred        Fallbacks
+#   L      complex / high-stakes        gpt-5.6-sol      gpt-5.5, gpt-5.4
+#   M      balanced / everyday          gpt-5.6-terra    gpt-5.4, gpt-5.5
+#   S      simple / fast                gpt-5.6-luna     gpt-5.4-mini, gpt-5.4
 #
-# If you WANT a specific model per agent, add `model = "<id>"` to that agent's
-# file in ~/.codex/agents/ (e.g. model = "gpt-5.5").
+# Reasoning effort is set per agent on top of the model (L=high, M=medium, S=low).
+# If no known model matches, the agent omits `model` and inherits your session
+# model — so it always works. Re-runs are idempotent.
+#
+# To pin a model yourself: edit that agent's file in ~/.codex/agents/ and remove
+# the `# gs-dev:auto` marker from its `model = ` line — the installer won't touch it.

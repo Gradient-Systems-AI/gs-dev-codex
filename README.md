@@ -15,7 +15,7 @@ gs-dev-codex/                         # <- this repo IS the marketplace root
 ├── plugins/gs-dev/
 │   ├── .codex-plugin/plugin.json     # plugin manifest (skills + hooks)
 │   ├── skills/                       # 5 skills → the /sprint-* workflow
-│   ├── agents/                       # 12 specialist subagents (installed to ~/.codex/agents)
+│   ├── agents/                       # 16 subagents: reviewers + spec-reviewer + scorer + verify + implementer-s/m/l
 │   └── hooks/                        # SessionStart hook that syncs the agents
 ├── AGENTS.md
 ├── config.example.toml
@@ -31,7 +31,7 @@ codex plugin marketplace add Gradient-Systems-AI/gs-dev-codex
 # 2. Install the plugin (brings the 5 skills)
 codex plugin add gs-dev@gradientsystems
 
-# 3. Install the 12 specialist subagents into ~/.codex/agents/
+# 3. Install the 16 subagents into ~/.codex/agents/
 #    Option A — run the bundled installer from the plugin cache (one command):
 bash ~/.codex/plugins/cache/gradientsystems/gs-dev/*/hooks/install-agents.sh
 #    Option B — let the bundled SessionStart hook do it automatically on next
@@ -44,7 +44,7 @@ Then set `agents.max_threads = 8` in `~/.codex/config.toml` (see `config.example
 so the 7-agent review panel runs in parallel instead of serializing.
 
 Verify: `codex plugin list -m gradientsystems` shows `installed, enabled`, and
-`ls ~/.codex/agents` lists the 12 `*.toml` specialists.
+`ls ~/.codex/agents` lists the 16 `*.toml` agents.
 
 ### Why the agents install separately
 
@@ -61,29 +61,37 @@ bundled hook once you trust it. The hook is idempotent and never clobbers your e
 | `skills/*/SKILL.md` | Codex **skills** (same format), bundled in the plugin |
 | `agents/*.md` (`model`, `tools`) | `~/.codex/agents/*.toml` (`name`, `description`, `developer_instructions`, `model_reasoning_effort`, `sandbox_mode`) |
 | `Agent` tool parallel dispatch | Codex **subagents** (`agents.max_threads` caps fan-out) |
-| per-agent `model: sonnet/opus/inherit` | per-agent `model_reasoning_effort` (model inherits the session — portable) |
+| per-agent `model: sonnet/opus/inherit` | per-agent **tier (L/M/S)** → a real model resolved at install + `model_reasoning_effort` |
 | `tools: Read, Glob, Grep` (read-only) | `sandbox_mode = "read-only"` (reviewers) / `"workspace-write"` (spec-keeper, implementer, verify) |
 | `${CLAUDE_PLUGIN_ROOT}/skills/...` | skill-relative paths (`formats/…`, `../other-skill/formats/…`) |
 | `.claude-plugin/plugin.json` + `marketplace.json` | `.codex-plugin/plugin.json` + `.agents/plugins/marketplace.json` |
 | `gh` / `git` bash | unchanged |
 
-### Model tiers (as reasoning effort, baked into each agent)
+### Model selection — a real model per complexity tier, resolved at install
 
-| gs-dev tier | agents | reasoning |
-|---|---|---|
-| `opus`/`inherit` | correctness, clarity, type-integrity, build-architect | high |
-| `sonnet` | error-hunter, exposure, test-integrity, fragility, repo-scout, spec-keeper, implementer | medium |
-| `haiku` | verify | low |
+Each agent is tagged with a tier (`L`/`M`/`S`). At install, `hooks/resolve-models.py`
+reads `~/.codex/models_cache.json` (the models your Codex actually has) and picks the
+best available model per tier, then sets it plus a reasoning effort in each agent file.
 
-No model id is hardcoded — agents inherit whatever model your session runs
-(`gpt-5.5`, etc.), so the plugin doesn't break when model ids change. To pin a
-model per agent, add `model = "<id>"` to that file in `~/.codex/agents/`.
+| Tier | Preferred model | Fallbacks | Effort | Agents |
+|---|---|---|---|---|
+| **L** — complex / high-stakes | `gpt-5.6-sol` (frontier) | `gpt-5.5` → `gpt-5.4` | high | correctness, clarity, type-integrity, build-architect, `implementer-l` |
+| **M** — balanced / everyday | `gpt-5.6-terra` | `gpt-5.4` → `gpt-5.5` | medium | error-hunter, exposure, test-integrity, fragility, repo-scout, spec-keeper, spec-reviewer, scorer, `implementer-m` |
+| **S** — simple / fast | `gpt-5.6-luna` | `gpt-5.4-mini` → `gpt-5.4` | low | verify, `implementer-s` |
+
+Why this is robust:
+- **Different models per complexity**, not one model with the thinking turned up/down.
+- **Self-adapting** — resolves against each machine's model list; never writes an invalid id.
+- **Graceful fallback** — if nothing matches, the agent omits `model` and inherits the session model.
+- **Idempotent** and **respects your overrides** — pin a model by editing the agent's
+  `model = ` line in `~/.codex/agents/` and deleting its `# gs-dev:auto` marker; the installer leaves it alone.
+- The `S/M/L` ticket labels drive `sprint-build` to the matching `implementer-s/m/l` agent.
 
 ## Verified vs. still to validate
 
 **Verified live** on codex-cli 0.144.5: marketplace registers, `codex plugin add`
 installs the plugin to the cache with skills + agents + hooks, the plugin shows
-`installed, enabled`, and the agent-install script places all 12 specialists in
+`installed, enabled`, and the installer resolves per-tier models and places all 16 agents in
 `~/.codex/agents/`.
 
 **Worth confirming in real use:**

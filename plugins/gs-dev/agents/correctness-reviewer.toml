@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: correctness-reviewer
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: L   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "correctness-reviewer"
 description = "Reviews PR diffs for bugs, logic errors, missing error handling, and pattern violations. Always runs on every review."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 
@@ -75,4 +76,5 @@ For each finding:
 ```
 
 If no issues found, report: "No bugs, logic errors, or error handling issues found in the changed code."
+
 '''

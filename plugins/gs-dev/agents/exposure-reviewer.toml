@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: exposure-reviewer
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: M   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "exposure-reviewer"
 description = "Detects hardcoded secrets, PII, log leaks, and internal URLs in PR diffs. Runs when code contains credentials, user data handling, logging, or URL configuration."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
@@ -67,4 +68,5 @@ For each finding:
 ```
 
 If no issues found, report: "No secrets, PII, or data exposure patterns found in the changed code."
+
 '''

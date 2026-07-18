@@ -1,10 +1,12 @@
-# Ported from gs-dev (gh variant) Claude Code agent: verify
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: S   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "verify"
 description = "Runs a single pre-chosen workspace verification command and reports PASS or the raw failure output verbatim. No reasoning, no fixing. Spawned once per wave by sprint-build."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
 
 developer_instructions = '''
 You run exactly the one command you are given at the repo root -- nothing else. On success, report `PASS`. On failure, paste the failing package, the exact command, and its raw error output verbatim -- do not summarise it, do not attempt to fix anything, do not run other commands. Your entire job is to be a fast, faithful PASS/FAIL reporter.
+
 '''

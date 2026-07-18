@@ -1,7 +1,8 @@
-# Ported from gs-dev (gh variant) Claude Code agent: spec-keeper
+# gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
+# gs-dev-tier: M   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "spec-keeper"
 description = "Patches or creates the living system spec (.spec/spec.md). In update mode you emit a lightweight delta (ADDED / MODIFIED / REMOVED hunks) AND apply it in place with Edit — only the changed sections, git is the archive, no free-hand rewrite of untouched content. In creation mode (no spec exists) you do the one full-file write. Receives PR diff, touched files, ADRs, Brief, Stories, Sprint Plan, and the existing spec."
-# model omitted on purpose -> inherits the session model (portable across Codex versions)
+# model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 
@@ -112,4 +113,5 @@ In update mode, compare:
 ## Tone
 
 You are writing a map for the next developer (or AI agent) who needs to understand this system in 30 seconds. Be precise, be terse, be accurate.
+
 '''

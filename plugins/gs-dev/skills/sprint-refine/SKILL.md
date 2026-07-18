@@ -6,8 +6,8 @@ argument-hint: "PR number or URL (optional — auto-detects current branch PR)"
 
 > **Codex adaptation note.** This skill was ported from a Claude Code plugin. Translate its Claude-isms as you execute:
 > - **"the Agent tool" / "dispatch a subagent" / "in one message with multiple Agent calls"** -> delegate to Codex **subagents**. To fan out in parallel, ask for the work to be delegated to N subagents at once; Codex collects their results back into this thread. The named specialists (`correctness-reviewer`, `clarity-reviewer`, etc.) are installed as custom agents under `~/.codex/agents/` (synced by this plugin) -- spawn them by name.
-> - **Model tiers** -- the skill names Claude models when selecting a subagent model. Codex tiers these by **reasoning effort**, not model id: `opus`/`inherit` -> **high**, `sonnet` -> **medium**, `haiku` -> **low**. These are already encoded per-agent in the installed `~/.codex/agents/*.toml` (which the plugin syncs), so you do not set the model yourself -- it inherits the session model, and effort comes from the agent file.
-> - **Generic implementer / verify subagents** (in the build phase) are provided as the `implementer` and `verify` custom agents. Route S/M complexity -> `implementer` (medium), L -> `implementer` at high reasoning, and workspace verification -> `verify`.
+> - **Model tiers** -- when the skill names a Claude model for a subagent, it maps to a real Codex model chosen **per tier at install** from the models this machine actually has: `opus`/`inherit` -> **L** (frontier, e.g. `gpt-5.6-sol`, high reasoning); `sonnet` -> **M** (balanced, e.g. `gpt-5.6-terra`, medium); `haiku` -> **S** (fast, e.g. `gpt-5.6-luna`, low). Each named specialist already carries its resolved model + effort in `~/.codex/agents/*.toml` (synced by this plugin, with automatic fallback to gpt-5.5/5.4 when the 5.6 family is absent), so you spawn it by name and never set the model yourself.
+> - **Build subagents** route by ticket complexity to distinct agents/models: **S** -> `implementer-s` (fast), **M** -> `implementer-m` (balanced), **L** -> `implementer-l` (frontier, high reasoning); workspace verification -> `verify` (fast).
 > - This variant uses the **`gh` CLI** for Issues/PRs -- make sure `gh auth status` is green before running the tickets/build/review phases.
 > - Parallel fan-out is capped by `agents.max_threads` in `~/.codex/config.toml` -- set it to 8+ so the full review panel runs at once (see the plugin's `config.example.toml`). Bundled files referenced below (`formats/`, `prompts/`) are relative to this skill's own directory.
 
@@ -111,7 +111,7 @@ Which findings should I fix? (all / numbers / none)
 
 First, **batch all the reads**: in a single message, read the code context (30-50 lines) for every selected finding at once. When several findings cluster in one file, read that file once rather than per-finding.
 
-Then **dispatch all fix implementers in one parallel message** (sonnet) — the same shape `/sprint-build` uses for a wave — instead of read-then-dispatch one finding at a time. Each implementer gets the finding, its code context, and the suggested fix, via `prompts/fix-prompt.md`.
+Then **dispatch all fix implementers in one parallel message** (delegate to `implementer-m`; use `implementer-l` for complex fixes) — the same shape `/sprint-build` uses for a wave — instead of read-then-dispatch one finding at a time. Each implementer gets the finding, its code context, and the suggested fix, via `prompts/fix-prompt.md`.
 
 Collect results: DONE → done; BLOCKED → report to user and continue with the rest. **File safety:** if two findings touch the same file, hand both to a single implementer so parallel fixes don't clobber each other.
 
@@ -158,7 +158,7 @@ The system has never been documented. Full exploration needed.
    - Read `.adr/ADR.md` — decisions that shape the design.
    - Read `package.json` — dependencies = stack.
 
-3. **Dispatch spec-keeper agent** (sonnet) with: explorer results, the Sprint Plan, the ADR content, and `formats/spec-format.md` (template). Instruction: **creation mode** — fill all spec sections from the codebase context (types and lists over prose).
+3. **Dispatch the `spec-keeper` agent** with: explorer results, the Sprint Plan, the ADR content, and `formats/spec-format.md` (template). Instruction: **creation mode** — fill all spec sections from the codebase context (types and lists over prose).
 
 ### Delta mode (subsequent cycles)
 
@@ -180,7 +180,7 @@ The spec exists. The PR diff scopes what changed; the spec-keeper patches only t
 
    Feed that union diff — and the full content of every file `git diff --name-only $BASE..$TIP` lists — to the spec-keeper in place of the single-PR diff. The spec-keeper's section anchors are additive, so the union yields the same sections as N per-wave diffs would, minus the half-states. Same delta-mode contract; just the whole sprint's change, patched once.
 
-2. **Dispatch spec-keeper agent** (sonnet) with: the existing spec, the PR diff (single-PR mode) **or the union diff (sprint mode)**, the full touched files, the directory listing, `package.json`, any ADRs, and `formats/spec-format.md` (template). Instruction: **delta mode** — emit ADDED / MODIFIED / REMOVED hunks naming the target section (and heading anchor) and **apply them**. Touch only changed sections; leave every unaffected section byte-for-byte alone. Add new entries, remove deleted ones, never re-describe untouched prose. Git is the archive — do not keep an in-file changelog.
+2. **Dispatch the `spec-keeper` agent** with: the existing spec, the PR diff (single-PR mode) **or the union diff (sprint mode)**, the full touched files, the directory listing, `package.json`, any ADRs, and `formats/spec-format.md` (template). Instruction: **delta mode** — emit ADDED / MODIFIED / REMOVED hunks naming the target section (and heading anchor) and **apply them**. Touch only changed sections; leave every unaffected section byte-for-byte alone. Add new entries, remove deleted ones, never re-describe untouched prose. Git is the archive — do not keep an in-file changelog.
 
 ### Review gate
 
