@@ -3,7 +3,7 @@
 name = "type-integrity-reviewer"
 description = "Analyzes TypeScript type design for encapsulation, invariant expression, and correctness. Runs when types are added or modified."
 # model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
 developer_instructions = '''

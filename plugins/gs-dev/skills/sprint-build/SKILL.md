@@ -6,8 +6,8 @@ argument-hint: "Milestone, version label, or issue numbers (e.g. 'v4', '#203 #20
 
 > **Codex adaptation note.** This skill was ported from a Claude Code plugin. Translate its Claude-isms as you execute:
 > - **"the Agent tool" / "dispatch a subagent" / "in one message with multiple Agent calls"** -> delegate to Codex **subagents**. To fan out in parallel, ask for the work to be delegated to N subagents at once; Codex collects their results back into this thread. The named specialists (`correctness-reviewer`, `clarity-reviewer`, etc.) are installed as custom agents under `~/.codex/agents/` (synced by this plugin) -- spawn them by name.
-> - **Model tiers** -- when the skill names a Claude model for a subagent, it maps to a real Codex model chosen **per tier at install** from the models this machine actually has: `opus`/`inherit` -> **L** (frontier, e.g. `gpt-5.6-sol`, high reasoning); `sonnet` -> **M** (balanced, e.g. `gpt-5.6-terra`, medium); `haiku` -> **S** (fast, e.g. `gpt-5.6-luna`, low). Each named specialist already carries its resolved model + effort in `~/.codex/agents/*.toml` (synced by this plugin, with automatic fallback to gpt-5.5/5.4 when the 5.6 family is absent), so you spawn it by name and never set the model yourself.
-> - **Build subagents** route by ticket complexity to distinct agents/models: **S** -> `implementer-s` (fast), **M** -> `implementer-m` (balanced), **L** -> `implementer-l` (frontier, high reasoning); workspace verification -> `verify` (fast).
+> - **Models** -- each named agent carries a real Codex model + reasoning effort, resolved at install from this machine's model list (fallback to gpt-5.5/5.4 if the 5.6 family is absent). Lineup: **sol** (frontier) is reserved for the heavyweight *review* agents -- correctness, clarity, type-integrity -- at **medium** effort; **terra** (balanced) runs everything else (design, the other reviewers, scoring, spec work, and implementer-l/-m); **luna** (fast) runs verify and implementer-s. Spawn agents by name; never set the model yourself.
+> - **Build subagents** route by ticket complexity: **S** -> `implementer-s` (luna, fast), **M** -> `implementer-m` (terra, balanced), **L** -> `implementer-l` (terra at high reasoning); workspace verification -> `verify` (luna, fast).
 > - This variant uses the **`gh` CLI** for Issues/PRs -- make sure `gh auth status` is green before running the tickets/build/review phases.
 > - Parallel fan-out is capped by `agents.max_threads` in `~/.codex/config.toml` -- set it to 8+ so the full review panel runs at once (see the plugin's `config.example.toml`). Bundled files referenced below (`formats/`, `prompts/`) are relative to this skill's own directory.
 
@@ -161,7 +161,7 @@ Dispatch all implementers for the wave in a **single message with multiple Agent
 Route each ticket to the implementer variant matching its complexity — each is a distinct custom agent carrying its own model + reasoning, resolved at install:
 - **S** (small) → delegate to the **`implementer-s`** agent (fast model — e.g. gpt-5.6-luna)
 - **M** (medium) → delegate to the **`implementer-m`** agent (balanced model — e.g. gpt-5.6-terra)
-- **L** (large) → delegate to the **`implementer-l`** agent (frontier model, high reasoning — e.g. gpt-5.6-sol)
+- **L** (large) → delegate to the **`implementer-l`** agent (balanced model at high reasoning — e.g. gpt-5.6-terra)
 
 ```
 Agent tool calls (all in one message for parallel execution):
@@ -195,7 +195,7 @@ Wait for ALL implementers in the wave to return before proceeding. Then assess e
 - **NEEDS_CONTEXT** → re-dispatch that specific implementer via the Agent tool with the missing context. This does not block other tickets in the wave — they proceed to spec review.
 - **BLOCKED** → assess the blocker:
   1. Can you provide more context? → re-dispatch via Agent tool with context
-  2. Would a more capable model help? → re-dispatch to the **`implementer-l`** agent (frontier model)
+  2. Would a more capable model help? → re-dispatch to the **`implementer-l`** agent (balanced model at high reasoning)
   3. Should the ticket be broken down? → tell the user
   4. Is it a real blocker? → escalate to the user
 

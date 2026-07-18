@@ -75,9 +75,13 @@ best available model per tier, then sets it plus a reasoning effort in each agen
 
 | Tier | Preferred model | Fallbacks | Effort | Agents |
 |---|---|---|---|---|
-| **L** — complex / high-stakes | `gpt-5.6-sol` (frontier) | `gpt-5.5` → `gpt-5.4` | high | correctness, clarity, type-integrity, build-architect, `implementer-l` |
-| **M** — balanced / everyday | `gpt-5.6-terra` | `gpt-5.4` → `gpt-5.5` | medium | error-hunter, exposure, test-integrity, fragility, repo-scout, spec-keeper, spec-reviewer, scorer, `implementer-m` |
-| **S** — simple / fast | `gpt-5.6-luna` | `gpt-5.4-mini` → `gpt-5.4` | low | verify, `implementer-s` |
+| **L** — review only | `gpt-5.6-sol` (frontier) | `gpt-5.5` → `gpt-5.4` | medium | correctness, clarity, type-integrity |
+| **M** — balanced / everyday | `gpt-5.6-terra` | `gpt-5.4` → `gpt-5.5` | medium (build-architect & `implementer-l`: high) | build-architect, error-hunter, exposure, test-integrity, fragility, repo-scout, spec-keeper, spec-reviewer, scorer, `implementer-m`, `implementer-l` |
+| **S** — simple / fast | `gpt-5.6-luna` | `gpt-5.4-mini` → `gpt-5.4` | low (implementer: medium) | verify, `implementer-s` |
+
+The frontier model (`sol`) is reserved for the three heavyweight review agents, at
+**medium** effort (deep judgment without burning tokens). Implementers are capped at
+`terra` — the largest (`implementer-l`) just runs it at high reasoning.
 
 Why this is robust:
 - **Different models per complexity**, not one model with the thinking turned up/down.

@@ -6,8 +6,8 @@ argument-hint: "PR number or URL (optional — auto-detects current branch PR)"
 
 > **Codex adaptation note.** This skill was ported from a Claude Code plugin. Translate its Claude-isms as you execute:
 > - **"the Agent tool" / "dispatch a subagent" / "in one message with multiple Agent calls"** -> delegate to Codex **subagents**. To fan out in parallel, ask for the work to be delegated to N subagents at once; Codex collects their results back into this thread. The named specialists (`correctness-reviewer`, `clarity-reviewer`, etc.) are installed as custom agents under `~/.codex/agents/` (synced by this plugin) -- spawn them by name.
-> - **Model tiers** -- when the skill names a Claude model for a subagent, it maps to a real Codex model chosen **per tier at install** from the models this machine actually has: `opus`/`inherit` -> **L** (frontier, e.g. `gpt-5.6-sol`, high reasoning); `sonnet` -> **M** (balanced, e.g. `gpt-5.6-terra`, medium); `haiku` -> **S** (fast, e.g. `gpt-5.6-luna`, low). Each named specialist already carries its resolved model + effort in `~/.codex/agents/*.toml` (synced by this plugin, with automatic fallback to gpt-5.5/5.4 when the 5.6 family is absent), so you spawn it by name and never set the model yourself.
-> - **Build subagents** route by ticket complexity to distinct agents/models: **S** -> `implementer-s` (fast), **M** -> `implementer-m` (balanced), **L** -> `implementer-l` (frontier, high reasoning); workspace verification -> `verify` (fast).
+> - **Models** -- each named agent carries a real Codex model + reasoning effort, resolved at install from this machine's model list (fallback to gpt-5.5/5.4 if the 5.6 family is absent). Lineup: **sol** (frontier) is reserved for the heavyweight *review* agents -- correctness, clarity, type-integrity -- at **medium** effort; **terra** (balanced) runs everything else (design, the other reviewers, scoring, spec work, and implementer-l/-m); **luna** (fast) runs verify and implementer-s. Spawn agents by name; never set the model yourself.
+> - **Build subagents** route by ticket complexity: **S** -> `implementer-s` (luna, fast), **M** -> `implementer-m` (terra, balanced), **L** -> `implementer-l` (terra at high reasoning); workspace verification -> `verify` (luna, fast).
 > - This variant uses the **`gh` CLI** for Issues/PRs -- make sure `gh auth status` is green before running the tickets/build/review phases.
 > - Parallel fan-out is capped by `agents.max_threads` in `~/.codex/config.toml` -- set it to 8+ so the full review panel runs at once (see the plugin's `config.example.toml`). Bundled files referenced below (`formats/`, `prompts/`) are relative to this skill's own directory.
 
@@ -168,7 +168,7 @@ Load `skills/sprint-review/prompts/review-prompt.md` for the dispatch template. 
 
 **Dispatch enrichment:** When dispatching the `exposure-reviewer`, read `skills/sprint-review/prompts/exposure-detection-prompt.md` and include its content in the Agent prompt alongside the standard review-prompt.md template. This gives the agent the detection heuristics and PII taxonomy it needs.
 
-**clarity-reviewer:** Dispatch it in this same parallel batch like any other specialist — it is tier L (frontier model, high reasoning), carried in its agent file. It reviews the full diff. It previously ran last to dedupe against other agents' findings; that de-duplication now happens at scoring (Phase 4), so it no longer waits on the others.
+**clarity-reviewer:** Dispatch it in this same parallel batch like any other specialist — it is a tier-L review agent (frontier `sol` model at medium effort), carried in its agent file. It reviews the full diff. It previously ran last to dedupe against other agents' findings; that de-duplication now happens at scoring (Phase 4), so it no longer waits on the others.
 
 For each agent, provide in the Agent prompt:
 - PR context (number, title, description)
@@ -393,7 +393,7 @@ Each PR already carries its own `### Code Review` comment and `needs-refine` lab
 - **Evidence required** — no finding without file:line and code snippet.
 - **Changed code only** — never flag pre-existing issues.
 - **No CI duplication** — don't flag what linters, typecheckers, or tests catch.
-- **Model selection** — each agent carries its own model, resolved per tier at install: tier M (balanced, e.g. gpt-5.6-terra) for scoring and the pattern/extraction specialists; tier L (frontier, e.g. gpt-5.6-sol, high reasoning) for the reasoning-heavy agents (correctness-reviewer, clarity-reviewer, type-integrity-reviewer). All dispatched in one parallel batch so the frontier-model latency is absorbed rather than added sequentially.
+- **Model selection** — each agent carries its own model, resolved per tier at install: tier M (balanced, e.g. gpt-5.6-terra) for scoring and the pattern/extraction specialists; tier L (frontier `gpt-5.6-sol` at medium effort) reserved for the three heavyweight review agents (correctness-reviewer, clarity-reviewer, type-integrity-reviewer). All dispatched in one parallel batch so the frontier-model latency is absorbed rather than added sequentially.
 - **De-duplication at scoring** — the simplifier runs in the parallel batch (no longer last); the scoring agent merges findings that multiple agents flag for the same file:line.
 - **Full SHA in links** — abbreviated SHAs break GitHub links.
 - **Draft-to-ready conversion** — draft PRs from /sprint-build are the expected input. Convert them to ready, don't reject them.

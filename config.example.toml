@@ -20,11 +20,13 @@ max_depth   = 1      # keep the skill on the main thread; it fans out one level
 # Codex actually has — read from ~/.codex/models_cache.json — with fallbacks:
 #
 #   Tier   Role                         Preferred        Fallbacks
-#   L      complex / high-stakes        gpt-5.6-sol      gpt-5.5, gpt-5.4
+#   L      review agents only           gpt-5.6-sol      gpt-5.5, gpt-5.4
 #   M      balanced / everyday          gpt-5.6-terra    gpt-5.4, gpt-5.5
 #   S      simple / fast                gpt-5.6-luna     gpt-5.4-mini, gpt-5.4
 #
-# Reasoning effort is set per agent on top of the model (L=high, M=medium, S=low).
+# The frontier model (sol) is reserved for the 3 heavyweight review agents, at
+# MEDIUM effort. Implementers are capped at terra (implementer-l runs it at high
+# effort; implementer-m at medium; implementer-s uses luna). Effort is per agent.
 # If no known model matches, the agent omits `model` and inherits your session
 # model — so it always works. Re-runs are idempotent.
 #

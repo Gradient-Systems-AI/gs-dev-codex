@@ -1,5 +1,5 @@
 # gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
-# gs-dev-tier: L   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
+# gs-dev-tier: M   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "implementer-l"
 description = "Implements a LARGE/complex ticket (L). Frontier model tier at high reasoning. Spawned per ticket per wave by local-sprint-build based on the ticket's S/M/L complexity label."
 # model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)

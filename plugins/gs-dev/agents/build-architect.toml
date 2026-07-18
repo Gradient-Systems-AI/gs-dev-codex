@@ -1,5 +1,5 @@
 # gs-dev agent — model is auto-selected at install from this tier (see hooks/resolve-models.py).
-# gs-dev-tier: L   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
+# gs-dev-tier: M   # L=gpt-5.6-sol(frontier)  M=gpt-5.6-terra(balanced)  S=gpt-5.6-luna(fast) — with fallbacks
 name = "build-architect"
 description = "Consumes a Sprint Plan slice (one epic or feature) + the governing ADR Y-statement + a Spec slice, and produces ticket design — Write-set, dependencies, acceptance criteria, and complexity — for AI-ready tickets. Owns per-cycle design; writes NO design-doc file."
 # model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)

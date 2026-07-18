@@ -3,7 +3,7 @@
 name = "clarity-reviewer"
 description = "Finds opportunities to simplify code without changing behavior. Reduces nesting, eliminates redundancy, improves readability. Always runs, in parallel with other reviewers."
 # model auto-selected by gs-dev installer (do not hand-edit unless you also remove this marker)
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
 developer_instructions = '''
