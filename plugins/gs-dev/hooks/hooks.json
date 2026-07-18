@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./hooks/install-agents.sh",
+            "statusMessage": "Syncing gs-dev specialist agents"
+          }
+        ]
+      }
+    ]
+  }
+}

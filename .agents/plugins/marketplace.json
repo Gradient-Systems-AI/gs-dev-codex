@@ -1,0 +1,19 @@
+{
+  "name": "gradientsystems",
+  "interface": {
+    "displayName": "GradientSystems"
+  },
+  "plugins": [
+    {
+      "name": "gs-dev",
+      "source": {
+        "source": "local",
+        "path": "./plugins/gs-dev"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "Development"
+    }
+  ]
+}

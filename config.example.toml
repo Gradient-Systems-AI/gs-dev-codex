@@ -1,0 +1,28 @@
+# gs-dev — Codex CLI configuration
+#
+# Codex reads config from ~/.codex/config.toml (not this repo). Merge the block
+# below in. The gs-dev plugin (skills) installs via `codex plugin add`; the
+# specialist subagents install into ~/.codex/agents/ (see README).
+#
+# This variant uses the `gh` CLI for Issues and PRs — run `gh auth login` first.
+
+# --- Subagent orchestration -------------------------------------------------
+# The review phase fans out to up to 7 specialist reviewers at once. The default
+# max_threads is 6, which silently serializes the 7th. Bump it so the whole panel
+# runs in parallel.
+[agents]
+max_threads = 8      # >= widest fan-out (7 reviewers + headroom)
+max_depth   = 1      # keep the skill on the main thread; it fans out one level
+
+# --- Models -----------------------------------------------------------------
+# The agents intentionally do NOT hardcode a model — each inherits your session
+# model, and only sets `model_reasoning_effort` (high / medium / low) to tier the
+# work. So you don't need to name a model here; just run your normal model.
+#
+# Tier mapping (baked into ~/.codex/agents/*.toml as reasoning effort):
+#   opus / inherit -> high    (correctness, clarity, type-integrity, build-architect)
+#   sonnet         -> medium  (error-hunter, exposure, test-integrity, fragility, repo-scout, spec-keeper, implementer)
+#   haiku          -> low     (verify)
+#
+# If you WANT a specific model per agent, add `model = "<id>"` to that agent's
+# file in ~/.codex/agents/ (e.g. model = "gpt-5.5").

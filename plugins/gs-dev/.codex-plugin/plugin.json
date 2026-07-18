@@ -1,0 +1,24 @@
+{
+  "name": "gs-dev",
+  "version": "1.0.1",
+  "description": "Advanced dev workflow — /sprint-plan (+ ADRs) /sprint-tickets /sprint-build /sprint-review /sprint-refine (+ spec). Ported from the Claude Code gs-dev plugin.",
+  "author": {
+    "name": "GradientSystems",
+    "url": "https://gradientsystems.nl"
+  },
+  "homepage": "https://github.com/Gradient-Systems-AI/gs-dev-codex",
+  "repository": "https://github.com/Gradient-Systems-AI/gs-dev-codex",
+  "license": "MIT",
+  "keywords": ["sprint", "workflow", "code-review", "planning", "agents"],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "gs-dev",
+    "shortDescription": "Five-phase sprint workflow with parallel specialist review.",
+    "longDescription": "Plan a cycle, break it into GitHub Issues, build in parallel waves, review with a panel of specialist subagents, and close the cycle out. Uses the gh CLI.",
+    "developerName": "GradientSystems",
+    "category": "Development",
+    "capabilities": [],
+    "websiteURL": "https://gradientsystems.nl"
+  }
+}
